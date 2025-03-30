@@ -8,6 +8,7 @@ import os
 import pandas as pd
 import numpy as np
 import time
+import asyncio
 
 # Set Streamlit page config
 st.set_page_config(
@@ -100,13 +101,35 @@ with st.sidebar:
     st.markdown("<h2 style='color: #667eea; margin-bottom: 2rem;'>Navigation</h2>", unsafe_allow_html=True)
     page = st.radio("", ["📷 Live Detection", "📊 Attendance Records"], label_visibility='hidden')
 
-# Load model
-try:
-    model = YOLO("./largemodel3.pt")
-    st.success("Model loaded successfully!")
-except Exception as e:
-    st.error(f"Error loading model: {str(e)}")
+# Get absolute path to model file
+MODEL_PATH = os.path.abspath("largemodel3.pt")
+st.info(f"Looking for model at: {MODEL_PATH}")
+
+# Check if model file exists
+if not os.path.exists(MODEL_PATH):
+    st.error(f"""
+    ⚠️ Error: Model file not found!
+    
+    Please ensure that the file `{MODEL_PATH}` exists in the current directory.
+    
+    Current directory contents:
+    {os.listdir('.')}
+    """)
     st.stop()
+
+# Load the model
+try:
+    model = YOLO(MODEL_PATH)
+    st.success("✅ Model loaded successfully!")
+except Exception as e:
+    st.error(f"❌ Error loading model: {str(e)}")
+    st.stop()
+
+# Initialize session state
+if 'webcam_active' not in st.session_state:
+    st.session_state.webcam_active = False
+if 'cap' not in st.session_state:
+    st.session_state.cap = None
 
 # CSV setup
 csv_file = "./detection_log.csv"
